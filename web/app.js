@@ -1,5 +1,7 @@
 const PLACES={'02108':'Beacon Hill','02109':'Waterfront','02110':'Financial District','02111':'Chinatown','02113':'North End','02114':'West End','02115':'Fenway','02116':'Back Bay','02118':'South End','02119':'Roxbury','02120':'Mission Hill','02121':'Dorchester · Grove Hall','02122':'Dorchester · Neponset','02124':'Dorchester · Codman Sq','02125':'Dorchester · Savin Hill','02126':'Mattapan','02127':'South Boston','02128':'East Boston','02129':'Charlestown','02130':'Jamaica Plain','02131':'Roslindale','02132':'West Roxbury','02134':'Allston','02135':'Brighton','02136':'Hyde Park','02163':'Allston · HBS','02199':'Prudential','02203':'Government Center','02210':'Seaport','02215':'Kenmore','02138':'Cambridge · Harvard Sq','02139':'Cambridge · Central Sq','02140':'Cambridge · Porter','02141':'Cambridge · East','02142':'Cambridge · Kendall','02143':'Somerville · Union Sq','02144':'Somerville · Davis Sq','02145':'Somerville · Winter Hill'};
-const money=v=>v==null?'—':'$'+d3.format(',')(Math.round(v));
+// All rents are stored in US dollars; C$ converts at the Bank of Canada rate fetched at build time (DATA.fx).
+const fxRate=()=>S.cur==='CAD'?DATA.fx.rate:1;
+const money=v=>v==null?'—':(S.cur==='CAD'?'C$':'US$')+d3.format(',')(Math.round(v*fxRate()));
 const num1=v=>v==null?'—':(v>=10?Math.round(v):v.toFixed(1));
 const pct=v=>v==null?'—':v+'%';
 const UNITS={room:'room in a 3‑bed share',b0:'studio',b1:'1‑bedroom'};
@@ -31,7 +33,7 @@ const FACTORS=[
 ];
 const RAMP=[1,2,3,4,5,6,7].map(i=>`var(--r${i})`);
 const MI=1.609344;
-const S={layer:'fit',unit:'room',basis:'zillow',budget:1500,radius:7,showT:true,hot:null};
+const S={layer:'fit',unit:'room',basis:'zillow',cur:'USD',budget:1500,radius:7,showT:true,hot:null};
 const zips=DATA.zips.features;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const placeName=p=>PLACES[p.zip]||p.city||`ZIP ${p.zip}`;
@@ -115,10 +117,11 @@ function render(){
   document.getElementById('fitPanel').hidden=id!=='fit';
   drawLegend();drawRank();
 }
-const layerTitle=id=>id==='rent'?`Rent, ${UNITS[S.unit]} (${BASES[S.basis].toLowerCase()})`:L[id].label;
+const BASIS_SHORT={zillow:'asking',blend:'blend',hud:'HUD'};
+const layerTitle=id=>id==='rent'?`Rent, ${UNITS[S.unit]}, ${BASIS_SHORT[S.basis]}`:L[id].label;
 function drawLegend(){
-  const l=L[S.layer],fmtE=v=>S.layer==='rent'||S.layer==='zori'?d3.format(',')(Math.round(v/50)*50):l.f(v);
-  document.getElementById('legend').innerHTML=`<div class="t">${layerTitle(S.layer)} · from</div>
+  const l=L[S.layer],fmtE=v=>S.layer==='rent'||S.layer==='zori'?d3.format(',')(Math.round(v*fxRate()/50)*50):l.f(v);
+  document.getElementById('legend').innerHTML=`<div class="t">${layerTitle(S.layer)} · ${S.layer==='rent'||S.layer==='zori'?(S.cur==='CAD'?'C$ ':'US$ '):''}from</div>
    <div class="sw">${scale.range().map((c,i)=>`<div><i style="background:${c}"></i><b>${fmtE(edges[i])}</b></div>`).join('')}</div>
    <div class="k"><span><i style="background:var(--over)"></i>${UNITS[S.unit]} over ${money(S.budget)}</span><span><i class="h"></i>No data</span></div>`;
 }
@@ -171,7 +174,15 @@ document.querySelectorAll('#unit button').forEach(b=>b.onclick=()=>{S.unit=b.dat
   document.querySelectorAll('#unit button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()});
 document.querySelectorAll('#basis button').forEach(b=>b.onclick=()=>{S.basis=b.dataset.b;
   document.querySelectorAll('#basis button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()});
-const bud=document.getElementById('budget');bud.oninput=()=>{S.budget=+bud.value;document.getElementById('budgetVal').textContent=money(S.budget);render()};
+const bud=document.getElementById('budget');
+bud.oninput=()=>{S.budget=+bud.value/fxRate();document.getElementById('budgetVal').textContent=money(S.budget);render()};
+// The slider works in the shown currency; S.budget stays in US dollars.
+function syncBudget(){const k=fxRate(),r=v=>Math.round(v*k/50)*50;bud.min=r(800);bud.max=r(4500);bud.value=r(S.budget);S.budget=+bud.value/k;
+  document.getElementById('budgetVal').textContent=money(S.budget)}
+document.querySelectorAll('#cur button').forEach(b=>b.onclick=()=>{S.cur=b.dataset.c;
+  document.querySelectorAll('#cur button').forEach(x=>x.setAttribute('aria-pressed',x===b));syncBudget();render()});
+document.getElementById('fxNote').textContent=`US$1 = C$${DATA.fx.rate.toFixed(4)}, ${DATA.fx.source} rate for ${d3.timeFormat('%B %-d, %Y')(new Date(DATA.fx.date+'T12:00'))}`;
+syncBudget();
 document.getElementById('radius').onchange=e=>{S.radius=+e.target.value;drawRank()};
 document.getElementById('showT').onchange=e=>{S.showT=e.target.checked;render()};
 document.getElementById('asof').textContent=d3.timeFormat('%B %Y')(new Date(DATA.asof+'T12:00'));

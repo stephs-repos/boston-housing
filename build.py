@@ -23,6 +23,7 @@ def run(stage, *args):
 
 def page():
     data = json.loads((BUILD / 'layers.json').read_text())
+    data['fx'] = json.loads((RAW / 'fx.json').read_text())
     osm = datetime.date.fromisoformat(data['layersAsOf']['osm']).strftime('%B %Y')
     web = {n: (ROOT / 'web' / n).read_text() for n in ('head.html', 'body.html', 'app.js')}
     # Fill the year placeholders before the data goes in, so text inside the data is never treated as a placeholder.

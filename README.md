@@ -21,6 +21,8 @@ The output is `out/boston-housing-map.html`, one self-contained page. A first ru
 | layers | `pipeline/layers.py` | Adds commute, crime, Census and amenity values per ZIP → `layers.json` |
 | page | `build.py` | Puts `web/head.html`, `web/body.html` and `web/app.js` together with the data into the page |
 
+Every build fetches a fresh USD/CAD rate (the one download that is never reused), so rebuilding and republishing is how the C$ figures stay current. The page can't fetch it while someone is viewing it, because published pages can't call outside services.
+
 Data years are set in `pipeline/config.py`. Change them there when a source publishes a new year: HUD in October, FBI in late summer, Census ACS in December.
 
 ## Sources
@@ -32,6 +34,7 @@ Data years are set in `pipeline/config.py`. Change them there when a source publ
 - MBTA GTFS timetable and V3 API (commute times, lines, stations)
 - US Census ACS 5-year summary files and the 2020 ZIP-to-town relationship file
 - OpenStreetMap through Overpass (venues, cafés, groceries, parks) and the Bluebikes station feed
+- Bank of Canada Valet API (daily USD/CAD rate for the C$ view, no key needed)
 
 ## Known limits
 

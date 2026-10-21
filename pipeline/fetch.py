@@ -16,9 +16,9 @@ def get(url, data=None, headers=UA):
         return r.read()
 
 
-def step(name, fn):
+def step(name, fn, always=False):
     out = RAW / name
-    if out.exists() and not REFRESH:
+    if out.exists() and not REFRESH and not always:
         print(f'  have  {name}'); return
     print(f'  fetch {name}', flush=True)
     body = fn()
@@ -115,6 +115,15 @@ def overpass(query):
     raise SystemExit('Every Overpass server failed; rerun later (downloads already done are kept).')
 
 
+def fx():
+    # Bank of Canada daily average USD/CAD; free, no key. Fetched on every build so the page's rate stays current.
+    obs = json.loads(get('https://www.bankofcanada.ca/valet/observations/FXUSDCAD/json?recent=1'))['observations'][-1]
+    rate = float(obs['FXUSDCAD']['v'])
+    if not 0.5 < rate < 3:
+        raise SystemExit(f'Implausible USD/CAD rate {rate} from the Bank of Canada; not using it.')
+    return json.dumps({'rate': rate, 'date': obs['d'], 'source': 'Bank of Canada'}).encode()
+
+
 def bluebikes():
     return get('https://gbfs.lyft.com/gbfs/1.1/bos/en/station_information.json')
 
@@ -134,3 +143,4 @@ if __name__ == '__main__':
     step('boston_crime.csv', boston_crime)
     step('osm.json', osm)
     step('bluebikes.json', bluebikes)
+    step('fx.json', fx, always=True)

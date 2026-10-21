@@ -15,6 +15,12 @@
         <button type="button" data-m="b1" aria-pressed="false">1‑bedroom</button>
       </div>
     </div>
+    <div class="ctl"><span>Currency</span>
+      <div class="seg" id="cur" role="group" aria-label="Currency">
+        <button type="button" data-c="USD" aria-pressed="true">US$</button>
+        <button type="button" data-c="CAD" aria-pressed="false">C$</button>
+      </div>
+    </div>
     <div class="ctl"><span>Rent figures</span>
       <div class="seg" id="basis" role="group" aria-label="Rent figures">
         <button type="button" data-b="zillow" aria-pressed="true">Asking</button>
@@ -53,6 +59,7 @@
   <section class="notes">
     <div><h3>Rent and commute</h3>
       <p><b>Rent:</b> HUD Small Area Fair Market Rents for fiscal {{SAFMR_FY}} give rent by bedroom count, utilities included, at roughly the 40th percentile of what recent movers paid. "Room" is the 3‑bed figure divided by three. Zillow's index (<span id="asof"></span>) tracks asking rents but only for all sizes together. <b>Asking</b> scales HUD's figure for the unit type by how far Zillow sits from HUD priced over that ZIP's own mix of rental units (Census counts by bedrooms), so areas of mostly small apartments don't look falsely cheap. <b>Blend</b> is halfway between. In Dorchester, Roxbury and Mission Hill, asking rents run 30–40% above HUD. ZIPs without a Zillow index use HUD.</p>
+      <p><b>Currency:</b> every source reports in US dollars, which is also what Boston listings use. The C$ view converts at <span id="fxNote"></span>; rebuilding the map fetches a fresh rate.</p>
       <p><b>Commute:</b> typical minutes to the school on a weekday morning, by walking plus subway or bus, from the MBTA's published timetable. It counts half the time between trips as waiting each time you board, and is the median across each ZIP.</p>
     </div>
     <div><h3>Reported crime</h3>
