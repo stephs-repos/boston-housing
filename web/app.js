@@ -33,6 +33,7 @@ const RAMP=[1,2,3,4,5,6,7].map(i=>`var(--r${i})`);
 const MI=1.609344;
 const S={layer:'fit',unit:'room',budget:1400,radius:7,showT:true,hot:null};
 const zips=DATA.zips.features;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const placeName=p=>PLACES[p.zip]||p.city||`ZIP ${p.zip}`;
 const shortName=p=>(PLACES[p.zip]||p.city||'').replace(/^.* · /,'');
 const hav=(a,b)=>{const r=Math.PI/180,dl=(b[1]-a[1])*r,dn=(b[0]-a[0])*r,h=Math.sin(dl/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dn/2)**2;return 6371*2*Math.asin(Math.sqrt(h))};
@@ -115,14 +116,14 @@ function drawRank(){
   const under=list.filter(p=>!over(p)).length;
   document.getElementById('rankTitle').textContent=`${layerTitle(id)}, ${l.best}`;
   document.getElementById('rankSub').textContent=`${list.length} ZIPs within ${S.radius} mi · ${under} with a ${UNITS[S.unit]} at or under ${money(S.budget)}`;
-  document.getElementById('rank').innerHTML=list.map((p,i)=>`<li data-z="${p.zip}" style="${over(p)?'opacity:.5':''}">
-    <span class="n">${String(i+1).padStart(2,'0')}</span><span class="nm">${placeName(p)} <span style="color:var(--muted);font-weight:400">${p.zip}</span></span><span class="p">${l.f(val(p,id))}</span>
-    <span class="meta">${money(p[S.unit])} ${UNITS[S.unit]} · ${p.commute} min to school · ${p.stn} ${p.stnMi.toFixed(1)} mi</span></li>`).join('');
+  document.getElementById('rank').innerHTML=list.map((p,i)=>`<li data-z="${esc(p.zip)}" style="${over(p)?'opacity:.5':''}">
+    <span class="n">${String(i+1).padStart(2,'0')}</span><span class="nm">${esc(placeName(p))} <span style="color:var(--muted);font-weight:400">${esc(p.zip)}</span></span><span class="p">${l.f(val(p,id))}</span>
+    <span class="meta">${money(p[S.unit])} ${UNITS[S.unit]} · ${p.commute} min to school · ${esc(p.stn)} ${p.stnMi.toFixed(1)} mi</span></li>`).join('');
 }
 function tipHtml(p){
   const row=(id,label)=>`<div class="row ${id===S.layer?'on':''}"><span>${label||L[id].label}</span><span>${L[id].f(val(p,id))}</span></div>`;
-  const crimeNote=p.crimeNote?`<div class="sub">Crime: not shown (${p.crimeNote})</div>`:p.crimeSrc==='town'?`<div class="sub">Crime rate is for all of ${p.town}</div>`:'';
-  return `<h3>${placeName(p)} · ${p.zip}</h3><div class="sub">${p.mi.toFixed(1)} mi from school · nearest T: ${p.stn} (${p.stnMi.toFixed(1)} mi)</div>
+  const crimeNote=p.crimeNote?`<div class="sub">Crime: not shown (${esc(p.crimeNote)})</div>`:p.crimeSrc==='town'?`<div class="sub">Crime rate is for all of ${esc(p.town)}</div>`:'';
+  return `<h3>${esc(placeName(p))} · ${esc(p.zip)}</h3><div class="sub">${p.mi.toFixed(1)} mi from school · nearest T: ${esc(p.stn)} (${p.stnMi.toFixed(1)} mi)</div>
    ${row('fit','Best-fit score')}
    <div class="grp">Cost</div>${row('rent',`Rent, ${UNITS[S.unit]}`)}${row('zori','Zillow typical, all sizes')}
    ${p.yoy!=null?`<div class="sub">Zillow change over 12 months: ${p.yoy>0?'+':''}${p.yoy}%</div>`:''}

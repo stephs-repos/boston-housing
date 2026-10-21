@@ -25,10 +25,13 @@ def page():
     data = json.loads((BUILD / 'layers.json').read_text())
     osm = datetime.date.fromisoformat(data['layersAsOf']['osm']).strftime('%B %Y')
     web = {n: (ROOT / 'web' / n).read_text() for n in ('head.html', 'body.html', 'app.js')}
-    html = (f"{web['head.html']}{web['body.html']}<script src=\"{D3}\"></script>\n"
-            f"<script>const DATA={json.dumps(data, separators=(',', ':'))};\n{web['app.js']}</script>\n")
+    # Fill the year placeholders before the data goes in, so text inside the data is never treated as a placeholder.
     for key, val in {'SAFMR_FY': SAFMR_FY, 'FBI_YEAR': FBI_YEAR, 'OSM_DATE': osm, 'ACS_SPAN': f'{ACS_YEAR - 4}–{ACS_YEAR}'}.items():
-        html = html.replace('{{' + key + '}}', str(val))
+        web = {n: t.replace('{{' + key + '}}', str(val)) for n, t in web.items()}
+    # The data includes third-party strings (station and town names); escape <, > and & so none can close the <script>.
+    blob = json.dumps(data, separators=(',', ':')).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+    html = (f"{web['head.html']}{web['body.html']}<script src=\"{D3}\"></script>\n"
+            f"<script>const DATA={blob};\n{web['app.js']}</script>\n")
     OUT.mkdir(exist_ok=True)
     (OUT / 'boston-housing-map.html').write_text(html)
     print(f'[page] out/boston-housing-map.html {len(html) // 1024} KB')
