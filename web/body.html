@@ -15,8 +15,15 @@
         <button type="button" data-m="b1" aria-pressed="false">1‑bedroom</button>
       </div>
     </div>
+    <div class="ctl"><span>Rent figures</span>
+      <div class="seg" id="basis" role="group" aria-label="Rent figures">
+        <button type="button" data-b="zillow" aria-pressed="true">Asking</button>
+        <button type="button" data-b="blend" aria-pressed="false">Blend</button>
+        <button type="button" data-b="hud" aria-pressed="false">HUD benchmark</button>
+      </div>
+    </div>
     <div class="ctl"><span>Budget per month</span>
-      <div style="display:flex;gap:10px;align-items:center"><input type="range" id="budget" min="800" max="4500" step="50" value="1400"><span class="val" id="budgetVal">$1,400</span></div>
+      <div style="display:flex;gap:10px;align-items:center"><input type="range" id="budget" min="800" max="4500" step="50" value="1500"><span class="val" id="budgetVal">$1,500</span></div>
     </div>
     <div class="ctl"><span>List ZIPs within</span>
       <select id="radius"><option value="1.5">1.5 mi (walkable)</option><option value="4">4 mi</option><option value="7" selected>7 mi</option><option value="16">16 mi</option></select>
@@ -45,7 +52,7 @@
 
   <section class="notes">
     <div><h3>Rent and commute</h3>
-      <p><b>Rent:</b> HUD Small Area Fair Market Rents for fiscal {{SAFMR_FY}} (roughly the 40th percentile of what recent movers paid, utilities included). "Room" is the 3‑bed figure divided by three. Zillow's typical asking rent for <span id="asof"></span> is in the tooltip. New listings often ask 10–25% more.</p>
+      <p><b>Rent:</b> HUD Small Area Fair Market Rents for fiscal {{SAFMR_FY}} give rent by bedroom count, utilities included, at roughly the 40th percentile of what recent movers paid. "Room" is the 3‑bed figure divided by three. Zillow's index (<span id="asof"></span>) tracks asking rents but only for all sizes together. <b>Asking</b> scales HUD's figure for the unit type by how far Zillow sits from HUD priced over that ZIP's own mix of rental units (Census counts by bedrooms), so areas of mostly small apartments don't look falsely cheap. <b>Blend</b> is halfway between. In Dorchester, Roxbury and Mission Hill, asking rents run 30–40% above HUD. ZIPs without a Zillow index use HUD.</p>
       <p><b>Commute:</b> typical minutes to the school on a weekday morning, by walking plus subway or bus, from the MBTA's published timetable. It counts half the time between trips as waiting each time you board, and is the median across each ZIP.</p>
     </div>
     <div><h3>Reported crime</h3>

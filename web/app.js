@@ -22,7 +22,7 @@ const LAYERS=[
 ];
 const L=Object.fromEntries(LAYERS.map(l=>[l.id,l]));
 const FACTORS=[
- {id:'rent',label:'Low rent',w:3,dir:-1,get:p=>p[S.unit]},
+ {id:'rent',label:'Low rent',w:3,dir:-1,get:p=>rentOf(p)},
  {id:'commute',label:'Short commute',w:2,dir:-1,get:p=>p.commute},
  {id:'safety',label:'Low violent crime',w:2,dir:-1,get:p=>p.viol},
  {id:'night',label:'Music and nightlife',w:1,dir:1,get:p=>p.music+p.bars},
@@ -31,7 +31,7 @@ const FACTORS=[
 ];
 const RAMP=[1,2,3,4,5,6,7].map(i=>`var(--r${i})`);
 const MI=1.609344;
-const S={layer:'fit',unit:'room',budget:1400,radius:7,showT:true,hot:null};
+const S={layer:'fit',unit:'room',basis:'zillow',budget:1500,radius:7,showT:true,hot:null};
 const zips=DATA.zips.features;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const placeName=p=>PLACES[p.zip]||p.city||`ZIP ${p.zip}`;
@@ -84,14 +84,25 @@ document.getElementById('zreset').onclick=()=>svg.transition().duration(300).cal
 // open zoomed on the core so the school's neighbourhood is readable
 svg.call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(2.4).translate(-sp[0],-sp[1]));
 
-const val=(p,id)=>id==='rent'?p[S.unit]:p[id];
+// HUD gives rent per bedroom count but sits near the 40th percentile and repeats one value across several ZIPs.
+// Zillow tracks asking rents per ZIP but only for all unit sizes together. Rescale HUD's figure for the chosen
+// unit by how far Zillow's typical rent sits from HUD priced over the ZIP's own mix of rental units (hudMix).
+const zillowRatio=p=>p.zori&&p.hudMix?p.zori/p.hudMix:null;
+const BASES={zillow:'Asking (Zillow-adjusted)',blend:'Blend',hud:'HUD benchmark'};
+function rentOf(p,basis=S.basis){
+  const h=p[S.unit],r=zillowRatio(p);
+  if(h==null)return null;
+  if(basis==='hud'||r==null)return h;  // no Zillow index for this ZIP: HUD is all there is
+  return basis==='zillow'?h*r:h*(1+r)/2;
+}
+const val=(p,id)=>id==='rent'?rentOf(p):p[id];
 function computeFit(){
   const ranks=FACTORS.map(fc=>{const v=zips.map(f=>fc.get(f.properties)).filter(x=>x!=null).sort((a,b)=>a-b);
     return p=>{const x=fc.get(p);if(x==null)return null;const lo=d3.bisectLeft(v,x),hi=d3.bisectRight(v,x);const r=((lo+hi-1)/2)/(v.length-1);return fc.dir>0?r:1-r}});
   zips.forEach(f=>{if(f.properties.pop<500){f.properties.fit=null;return}let s=0,w=0;FACTORS.forEach((fc,i)=>{const r=ranks[i](f.properties);if(r!=null&&fc.w>0){s+=fc.w*r;w+=fc.w}});f.properties.fit=w?100*s/w:null});
 }
 let scale,edges;
-const over=p=>p[S.unit]!=null&&p[S.unit]>S.budget;
+const over=p=>rentOf(p)!=null&&rentOf(p)>S.budget;
 function render(){
   computeFit();
   const id=S.layer,vals=zips.map(f=>val(f.properties,id)).filter(v=>v!=null).sort((a,b)=>a-b);
@@ -104,7 +115,7 @@ function render(){
   document.getElementById('fitPanel').hidden=id!=='fit';
   drawLegend();drawRank();
 }
-const layerTitle=id=>id==='rent'?`Rent, ${UNITS[S.unit]}`:L[id].label;
+const layerTitle=id=>id==='rent'?`Rent, ${UNITS[S.unit]} (${BASES[S.basis].toLowerCase()})`:L[id].label;
 function drawLegend(){
   const l=L[S.layer],fmtE=v=>S.layer==='rent'||S.layer==='zori'?d3.format(',')(Math.round(v/50)*50):l.f(v);
   document.getElementById('legend').innerHTML=`<div class="t">${layerTitle(S.layer)} · from</div>
@@ -118,14 +129,17 @@ function drawRank(){
   document.getElementById('rankSub').textContent=`${list.length} ZIPs within ${S.radius} mi · ${under} with a ${UNITS[S.unit]} at or under ${money(S.budget)}`;
   document.getElementById('rank').innerHTML=list.map((p,i)=>`<li data-z="${esc(p.zip)}" style="${over(p)?'opacity:.5':''}">
     <span class="n">${String(i+1).padStart(2,'0')}</span><span class="nm">${esc(placeName(p))} <span style="color:var(--muted);font-weight:400">${esc(p.zip)}</span></span><span class="p">${l.f(val(p,id))}</span>
-    <span class="meta">${money(p[S.unit])} ${UNITS[S.unit]} · ${p.commute} min to school · ${esc(p.stn)} ${p.stnMi.toFixed(1)} mi</span></li>`).join('');
+    <span class="meta">${money(rentOf(p))} ${UNITS[S.unit]} · ${p.commute} min to school · ${esc(p.stn)} ${p.stnMi.toFixed(1)} mi</span></li>`).join('');
 }
 function tipHtml(p){
   const row=(id,label)=>`<div class="row ${id===S.layer?'on':''}"><span>${label||L[id].label}</span><span>${L[id].f(val(p,id))}</span></div>`;
   const crimeNote=p.crimeNote?`<div class="sub">Crime: not shown (${esc(p.crimeNote)})</div>`:p.crimeSrc==='town'?`<div class="sub">Crime rate is for all of ${esc(p.town)}</div>`:'';
   return `<h3>${esc(placeName(p))} · ${esc(p.zip)}</h3><div class="sub">${p.mi.toFixed(1)} mi from school · nearest T: ${esc(p.stn)} (${p.stnMi.toFixed(1)} mi)</div>
    ${row('fit','Best-fit score')}
-   <div class="grp">Cost</div>${row('rent',`Rent, ${UNITS[S.unit]}`)}${row('zori','Zillow typical, all sizes')}
+   <div class="grp">Cost, ${UNITS[S.unit]}</div>
+   ${Object.entries(BASES).map(([b,label])=>`<div class="row ${S.layer==='rent'&&b===S.basis?'on':''}"><span>${label}</span><span>${money(rentOf(p,b))}</span></div>`).join('')}
+   ${zillowRatio(p)==null?'<div class="sub">No Zillow index here, so all three use HUD</div>':`<div class="sub">Zillow runs ${Math.round(Math.abs(zillowRatio(p)-1)*100)}% ${zillowRatio(p)>=1?'above':'below'} HUD in this ZIP</div>`}
+   ${row('zori','Zillow typical, all sizes')}
    ${p.yoy!=null?`<div class="sub">Zillow change over 12 months: ${p.yoy>0?'+':''}${p.yoy}%</div>`:''}
    <div class="grp">School</div>${row('commute','Commute, walk + T or bus')}
    <div class="grp">Reported crime per 1,000 residents</div>${row('viol','Violent')}${row('prop','Property')}${crimeNote}
@@ -155,6 +169,8 @@ document.getElementById('weights').innerHTML=FACTORS.map(fc=>`<label for="w-${fc
 FACTORS.forEach(fc=>{const el=document.getElementById('w-'+fc.id);el.oninput=()=>{fc.w=+el.value;document.getElementById('wv-'+fc.id).textContent=fc.w;render()}});
 document.querySelectorAll('#unit button').forEach(b=>b.onclick=()=>{S.unit=b.dataset.m;
   document.querySelectorAll('#unit button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()});
+document.querySelectorAll('#basis button').forEach(b=>b.onclick=()=>{S.basis=b.dataset.b;
+  document.querySelectorAll('#basis button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()});
 const bud=document.getElementById('budget');bud.oninput=()=>{S.budget=+bud.value;document.getElementById('budgetVal').textContent=money(S.budget);render()};
 document.getElementById('radius').onchange=e=>{S.radius=+e.target.value;drawRank()};
 document.getElementById('showT').onchange=e=>{S.showT=e.target.checked;render()};

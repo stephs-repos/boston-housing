@@ -66,7 +66,7 @@ for f in feats:
 def acs(t):
     rows = csv.DictReader(open(f'{D}/acs_{t}.txt'), delimiter='|')
     return {r['GEO_ID'][-5:]: r for r in rows}
-pop, age, ten, mode = acs('b01003'), acs('b01001'), acs('b25003'), acs('b08301')
+pop, age, ten, mode, beds = acs('b01003'), acs('b01001'), acs('b25003'), acs('b08301'), acs('b25042')
 num = lambda r, *cols: sum(max(0, int(r[f'{c}'])) for c in cols)
 for f in feats:
     p, z = f['properties'], f['properties']['zip']
@@ -76,6 +76,13 @@ for f in feats:
         p['young'] = round(100 * num(age[z], *yc) / int(age[z]['B01001_E001']))
     if z in ten and int(ten[z]['B25003_E001']) > 0:
         p['renters'] = round(100 * int(ten[z]['B25003_E003']) / int(ten[z]['B25003_E001']))
+    if z in beds and p.get('b0') is not None:
+        # HUD rent averaged over this ZIP's own mix of rental units by bedroom count (5+ priced as 4).
+        # Zillow's all-sizes index is compared against this, so ZIPs of small units aren't read as cheap.
+        r = beds[z]; n = [max(0, int(r[f'B25042_E0{k}'])) for k in range(10, 16)]
+        if sum(n) >= 100:
+            hud = [p['b0'], p['b1'], p['b2'], p['b3'], p['b4'], p['b4']]
+            p['hudMix'] = round(sum(c * h for c, h in zip(n, hud)) / sum(n))
     if z in mode:
         r = mode[z]; base = int(r['B08301_E001']) - int(r['B08301_E021'])
         if base > 0: p['carfree'] = round(100 * num(r, 'B08301_E010', 'B08301_E018', 'B08301_E019') / base)

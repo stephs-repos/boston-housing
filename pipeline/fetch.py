@@ -127,7 +127,7 @@ if __name__ == '__main__':
         step(f'shapes_{route}.json', mbta(f'shapes?filter%5Broute%5D={route}'))
     step('stops.json', mbta('stops?filter%5Broute_type%5D=0,1'))
     step('gtfs', gtfs)
-    for t in ['b01003', 'b01001', 'b25003', 'b08301']:
+    for t in ['b01003', 'b01001', 'b25003', 'b08301', 'b25042']:
         step(f'acs_{t}.txt', lambda t=t: acs(t))
     step('rel_cousub.txt', zip_town)
     step('fbi_table8.xlsx', fbi_table8)
