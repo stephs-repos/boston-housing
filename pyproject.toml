@@ -1,0 +1,6 @@
+[project]
+name = "boston-housing"
+version = "0.1.0"
+description = "Where to live while at North Bennet Street School: a ZIP-level map of rent, commute, crime and neighbourhood life."
+requires-python = ">=3.12"
+dependencies = ["openpyxl>=3.1"]

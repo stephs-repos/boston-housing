@@ -1,0 +1,61 @@
+<div class="wrap">
+  <header>
+    <h1>Where to live while at North Bennet Street School</h1>
+    <p class="lede">Every ZIP within about 16 miles of the school at 150 North Street, mapped by rent, commute, reported crime, nightlife and who lives there. Light is low, dark is high. Set a budget and ZIPs you can't afford turn grey on every layer.</p>
+  </header>
+
+  <div class="controls">
+    <div class="ctl"><span>Map layer</span>
+      <select id="layer" aria-label="Map layer"></select>
+    </div>
+    <div class="ctl"><span>Rent for</span>
+      <div class="seg" id="unit" role="group" aria-label="Unit type">
+        <button type="button" data-m="room" aria-pressed="true">Room in a 3‑bed share</button>
+        <button type="button" data-m="b0" aria-pressed="false">Studio</button>
+        <button type="button" data-m="b1" aria-pressed="false">1‑bedroom</button>
+      </div>
+    </div>
+    <div class="ctl"><span>Budget per month</span>
+      <div style="display:flex;gap:10px;align-items:center"><input type="range" id="budget" min="800" max="4500" step="50" value="1400"><span class="val" id="budgetVal">$1,400</span></div>
+    </div>
+    <div class="ctl"><span>List ZIPs within</span>
+      <select id="radius"><option value="1.5">1.5 mi (walkable)</option><option value="4">4 mi</option><option value="7" selected>7 mi</option><option value="16">16 mi</option></select>
+    </div>
+    <label class="chk"><input type="checkbox" id="showT" checked> T lines</label>
+  </div>
+
+  <div class="fit" id="fitPanel" hidden>
+    <b>What matters to him?</b>
+    <div id="weights" style="display:contents"></div>
+    <p class="hint">Each ZIP is ranked against the others on every factor, then the ranks are averaged using these weights. 0 ignores a factor. Darker means a better fit.</p>
+  </div>
+
+  <div class="main">
+    <div class="mapbox" id="mapbox">
+      <svg id="map" role="img" aria-label="Heat map of Boston-area ZIP codes"></svg>
+      <div class="zoombtns"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button><button type="button" id="zreset" aria-label="Reset view" style="font-size:12px">⟲</button></div>
+      <div class="legend" id="legend"></div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <aside>
+      <header><h2 id="rankTitle"></h2><p id="rankSub"></p></header>
+      <ol class="rank" id="rank"></ol>
+    </aside>
+  </div>
+
+  <section class="notes">
+    <div><h3>Rent and commute</h3>
+      <p><b>Rent:</b> HUD Small Area Fair Market Rents for fiscal {{SAFMR_FY}} (roughly the 40th percentile of what recent movers paid, utilities included). "Room" is the 3‑bed figure divided by three. Zillow's typical asking rent for <span id="asof"></span> is in the tooltip. New listings often ask 10–25% more.</p>
+      <p><b>Commute:</b> typical minutes to the school on a weekday morning, by walking plus subway or bus, from the MBTA's published timetable. It counts half the time between trips as waiting each time you board, and is the median across each ZIP.</p>
+    </div>
+    <div><h3>Reported crime</h3>
+      <p>Offenses per 1,000 residents in {{FBI_YEAR}}. Violent means murder, robbery and aggravated assault. Property means burglary, theft and car theft. Town totals come from the FBI's <i>Crime in the United States {{FBI_YEAR}}</i>. Boston's total is split across its ZIPs by where the Boston Police logged each incident.</p>
+      <p>Outside Boston, every ZIP in a town shares the town's rate. Downtown ZIPs with few residents but lots of visitors are left out, because a per-resident rate would mislead. Treat this as a relative guide. It is not a safety rating for any street.</p>
+    </div>
+    <div><h3>Neighbourhood life</h3>
+      <p><b>Venues, cafés, groceries, parks, Bluebikes:</b> how many are within about a 12‑minute walk, averaged across the ZIP, from OpenStreetMap ({{OSM_DATE}}) and the Bluebikes station feed. OpenStreetMap misses some small venues.</p>
+      <p><b>Aged 20–34, car-free commuters, renters:</b> US Census American Community Survey {{ACS_SPAN}}.</p>
+      <p>Sources: <a href="https://www.huduser.gov/portal/datasets/fmr/smallarea/index.html">HUD</a> · <a href="https://www.zillow.com/research/data/">Zillow</a> · <a href="https://cde.ucr.cjis.gov/">FBI CDE</a> · <a href="https://data.boston.gov/dataset/crime-incident-reports-august-2015-to-date-source-new-system">Analyze Boston</a> · <a href="https://www.mbta.com/developers/gtfs">MBTA GTFS</a> · <a href="https://www.census.gov/programs-surveys/acs">Census ACS</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a></p>
+    </div>
+  </section>
+</div>
