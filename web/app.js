@@ -29,7 +29,7 @@ const FACTORS=[
  {id:'safety',label:'Low violent crime',w:2,dir:-1,get:p=>p.viol},
  {id:'night',label:'Music and nightlife',w:1,dir:1,get:p=>p.music+p.bars},
  {id:'daily',label:'Cafés and groceries',w:1,dir:1,get:p=>p.cafes+p.grocery},
- {id:'young',label:'People his age',w:1,dir:1,get:p=>p.young},
+ {id:'young',label:'People aged 20–34',w:1,dir:1,get:p=>p.young},
 ];
 const RAMP=[1,2,3,4,5,6,7].map(i=>`var(--r${i})`);
 const MI=1.609344;

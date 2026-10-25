@@ -7,9 +7,12 @@ Where to live while at North Bennet Street School (150 North St, Boston). A sing
 ```bash
 uv run build.py              # reuses anything already downloaded into data/raw
 uv run build.py --refresh    # downloads every source again
+uv run build.py --deploy     # build, then publish to GitHub Pages
 ```
 
-The output is `out/boston-housing-map.html`, one self-contained page. A first run downloads about 300 MB and takes 2–10 minutes; most of that is waiting on the public OpenStreetMap (Overpass) servers. The steps after the download take about 10 seconds.
+The live map is at https://stephs-repos.github.io/boston-housing/. `--deploy` pushes `out/site/` (the page, its LinkedIn/Open Graph preview image `web/og.png`, and `.nojekyll`) as the only commit on the `gh-pages` branch, which GitHub Pages serves.
+
+The output is `out/site/index.html`, one self-contained page (plus `out/boston-housing-map.html`, the same page without the document wrapper, for hosts that add their own). A first run downloads about 300 MB and takes 2–10 minutes; most of that is waiting on the public OpenStreetMap (Overpass) servers. The steps after the download take about 10 seconds.
 
 ## Pipeline
 
