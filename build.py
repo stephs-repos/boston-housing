@@ -7,7 +7,7 @@
 Writes out/boston-housing-map.html (a page body for Claude artifacts, which add their own
 <html>/<head> wrapper) and out/site/index.html (a complete document for GitHub Pages).
 """
-import datetime, html, json, shutil, subprocess, sys, tempfile, time
+import datetime, hashlib, html, json, shutil, subprocess, sys, tempfile, time
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -57,6 +57,9 @@ def document(head, body):
     # What the artifact host would otherwise add (doctype, charset, viewport, a small reset), plus the
     # Open Graph tags LinkedIn reads to draw the link preview.
     t, d = html.escape(SHARE_TITLE), html.escape(SHARE_TEXT)
+    # LinkedIn caches preview images by URL for days; a content hash in the query makes a new image a new URL.
+    og = ROOT / 'web/og.png'
+    img = f"{SITE_URL}og.png?v={hashlib.sha256(og.read_bytes()).hexdigest()[:10]}" if og.exists() else ''
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -67,9 +70,9 @@ def document(head, body):
 <meta property="og:url" content="{SITE_URL}">
 <meta property="og:title" content="{t}">
 <meta property="og:description" content="{d}">
-<meta property="og:image" content="{SITE_URL}og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<meta property="og:image" content="{img}">
+<meta property="og:image:width" content="2400">
+<meta property="og:image:height" content="1260">
 <meta name="twitter:card" content="summary_large_image">
 <style>:root{{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}
 body{{margin:0;font:14px/1.5 system-ui,sans-serif}}img{{max-width:100%}}[hidden]{{display:none!important}}</style>
