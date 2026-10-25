@@ -6,7 +6,7 @@ const num1=v=>v==null?'—':(v>=10?Math.round(v):v.toFixed(1));
 const pct=v=>v==null?'—':v+'%';
 const UNITS={room:'room in a 3‑bed share',b0:'studio',b1:'1‑bedroom'};
 const LAYERS=[
- {id:'fit',group:'Overall',label:'Best fit (adjustable)',f:v=>v==null?'—':Math.round(v),dir:1,best:'best fit first'},
+ {id:'fit',group:'Overall',label:'Best fit (your weights)',title:'Fit score out of 100',f:v=>v==null?'—':Math.round(v),dir:1,best:'highest first'},
  {id:'rent',group:'Cost',label:'Rent',f:money,dir:-1,best:'cheapest first'},
  {id:'zori',group:'Cost',label:'Zillow typical asking rent, all sizes',f:money,dir:-1,best:'cheapest first'},
  {id:'commute',group:'Getting to school',label:'Commute to school (minutes)',f:v=>v==null?'—':v+' min',dir:-1,best:'shortest first'},
@@ -118,7 +118,7 @@ function render(){
   drawLegend();drawRank();
 }
 const BASIS_SHORT={zillow:'asking',blend:'blend',hud:'HUD'};
-const layerTitle=id=>id==='rent'?`Rent, ${UNITS[S.unit]}, ${BASIS_SHORT[S.basis]}`:L[id].label;
+const layerTitle=id=>id==='rent'?`Rent, ${UNITS[S.unit]}, ${BASIS_SHORT[S.basis]}`:L[id].title||L[id].label;
 function drawLegend(){
   const l=L[S.layer],fmtE=v=>S.layer==='rent'||S.layer==='zori'?d3.format(',')(Math.round(v*fxRate()/50)*50):l.f(v);
   document.getElementById('legend').innerHTML=`<div class="t">${layerTitle(S.layer)} · ${S.layer==='rent'||S.layer==='zori'?(S.cur==='CAD'?'C$ ':'US$ '):''}from</div>
@@ -138,7 +138,7 @@ function tipHtml(p){
   const row=(id,label)=>`<div class="row ${id===S.layer?'on':''}"><span>${label||L[id].label}</span><span>${L[id].f(val(p,id))}</span></div>`;
   const crimeNote=p.crimeNote?`<div class="sub">Crime: not shown (${esc(p.crimeNote)})</div>`:p.crimeSrc==='town'?`<div class="sub">Crime rate is for all of ${esc(p.town)}</div>`:'';
   return `<h3>${esc(placeName(p))} · ${esc(p.zip)}</h3><div class="sub">${p.mi.toFixed(1)} mi from school · nearest T: ${esc(p.stn)} (${p.stnMi.toFixed(1)} mi)</div>
-   ${row('fit','Best-fit score')}
+   ${row('fit','Fit score out of 100')}
    <div class="grp">Cost, ${UNITS[S.unit]}</div>
    ${Object.entries(BASES).map(([b,label])=>`<div class="row ${S.layer==='rent'&&b===S.basis?'on':''}"><span>${label}</span><span>${money(rentOf(p,b))}</span></div>`).join('')}
    ${zillowRatio(p)==null?'<div class="sub">No Zillow index here, so all three use HUD</div>':`<div class="sub">Zillow runs ${Math.round(Math.abs(zillowRatio(p)-1)*100)}% ${zillowRatio(p)>=1?'above':'below'} HUD in this ZIP</div>`}
